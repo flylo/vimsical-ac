@@ -23,4 +23,5 @@ old notes:
   * http://blog.qbox.io/multi-field-partial-word-autocomplete-in-elasticsearch-using-ngrams
   * http://pythonhosted.org/pyenchant/api/enchant.html
   * http://norvig.com/spell-correct.html
-    * could compute probable n-grams within each topic to avoid having to process millions of word combination
+    * determine how to rank words in the language model - ranking by topic score would lead to a lot of overly topic-specific results
+    * might NOT want to remove stopwords
