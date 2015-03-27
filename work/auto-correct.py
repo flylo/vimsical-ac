@@ -3,15 +3,22 @@ import json
 import re
 import collections
 import pdb
+import sys
+from gensim.corpora import Dictionary
+from gensim.models.ldamodel import LdaModel
+from numpy import argmax
 
 class AutoCorrect(object):
 
-  def __init__(self, connect_file, database):
+  def __init__(self, connect_file, database, model_file):
     self._alphabet = 'abcdefghijklmnopqrstuvwxyz'
     self._dbConnect(connect_file, database)
-    word_cursor = self.db.topic_0.find()
-    word_dict = {word['word'] : word['score'] for word in word_cursor}
-    self._words = word_dict
+    with open(model_file, 'rb') as mdlf:
+      contents = json.load(mdlf)
+      model = contents['model-path']
+      dictionary = contents['dictionary-path']
+    self.model = LdaModel.load(model)
+    self.dictionary = Dictionary.load(dictionary)
 
   def _dbConnect(self, connect_file, database):
     """
@@ -45,22 +52,50 @@ class AutoCorrect(object):
   
   def _known(self, words): return set(w for w in words if w in self._words)
   
-  def _correct(self, word):
-    e1_words = self._known(self._edits1(word))
-    e2_words = self._known_edits2(word)
+  def _correct(self):
+    e1_words = self._known(self._edits1(self.word))
+    e2_words = self._known_edits2(self.word)
 
-    candidates = self._known([word]) or e1_words or e2_words or [word]
+    candidates = self._known([self.word]) or e1_words or e2_words or [self.word]
     # FIX - RETURN MAX USING PYMONGO MAX CURSOR
     return max(candidates, key=self._words.get)
+
+  def _topicPredict(self):
+    # FIX = MAKE THIS UPDATE THE DICTIONARY OBJECT
+    #  THIS CAN BE EITHER ON DISK OR CACHED DEPENDING ON FINAL ARCH
+    sentence = self.sentence.split()
+    self.word = sentence[len(sentence) - 1]
+    sentence = sentence[:len(sentence) - 1]
+    bow = self.dictionary.doc2bow(sentence)
+    topic_scores = self.model[bow]
+    #pdb.set_trace()
+    topic = argmax([topic_scores[i][1] for i in range(len(topic_scores))])
+    self.topic = 'topic_' + str(topic)
+
+  def _topicInit(self):
+    self._topicPredict()
+    collection = getattr(self.db, self.topic)
+    word_cursor = collection.find()
+    word_dict = {word['word'] : word['score'] for word in word_cursor}
+    self._words = word_dict
+
+  def topicCorrect(self, sentence):
+    self.sentence = sentence
+    self._topicInit()
+    return self._correct()
 
   # def correctWord(self, word):
 
 
 if __name__ == "__main__":
+  input_sentence = sys.argv[1]
   connect_file='./connect-string.json'
   database='vimsical'
-  ac = AutoCorrect(connect_file, database)
-  pdb.set_trace()
+  model_file = './model-config.json'
+  ac = AutoCorrect(connect_file, database, model_file)
+  print ac.topicCorrect(input_sentence)
+  #ac._topicPredict('hi there')
+  #pdb.set_trace()
 
 
   ## THESE SHOULD BE IN THE MONGO DB  

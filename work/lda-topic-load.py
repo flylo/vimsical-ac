@@ -68,14 +68,19 @@ class LdaPersistent(object):
 			num_topics=self.num_topics,
 			id2word=self.corpus.dictionary)
 	
-	def saveLda(self, file_path):
+	def saveLda(self, model_file_path, dictionary_file_path):
 		"""
 		save model object for loading later
 		"""
-		if file_path:
-			self.model.save(file_path)
+		print "Pickling model object..."
+		if model_file_path:
+			self.model.save(model_file_path)
 		else:
 			self.model.save('./lda-model')
+		if dictionary_file_path:
+			self.corpus.dictionary.save(dictionary_file_path)
+		else:
+			self.corpus.dictionary.save('./lda-dictionary')
 
 	def _dbConnect(self, connect_file, database):
 		"""
@@ -153,6 +158,8 @@ if __name__ == '__main__':
 	xml_path = './data/ap.xml'
 	corpus = CreateCorpus(xml_path)
 	lda = LdaPersistent(corpus, 20)
+	lda.saveLda('./models/lda-model.pkl',
+		'./models/lda-dictionary.pkl')
 	lda.dbInsert(
 		connect_file='./connect-string.json',
 		database='vimsical')

@@ -1,0 +1,2 @@
+{"model-path" : "./models/lda-model.pkl",
+ "dictionary-path" : "./models/lda-dictionary.pkl"}
