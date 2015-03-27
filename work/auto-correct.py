@@ -7,10 +7,11 @@ import pdb
 class AutoCorrect(object):
 
   def __init__(self, connect_file, database):
-
-    self.alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    self._alphabet = 'abcdefghijklmnopqrstuvwxyz'
     self._dbConnect(connect_file, database)
-    self._words = self.db.topic_0.distinct("word")
+    word_cursor = self.db.topic_0.find()
+    word_dict = {word['word'] : word['score'] for word in word_cursor}
+    self._words = word_dict
 
   def _dbConnect(self, connect_file, database):
     """
@@ -35,22 +36,22 @@ class AutoCorrect(object):
     splits     = [(word[:i], word[i:]) for i in range(len(word) + 1)]
     deletes    = [a + b[1:] for a, b in splits if b]
     transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b)>1]
-    replaces   = [a + c + b[1:] for a, b in splits for c in alphabet if b]
-    inserts    = [a + c + b     for a, b in splits for c in alphabet]
+    replaces   = [a + c + b[1:] for a, b in splits for c in self._alphabet if b]
+    inserts    = [a + c + b     for a, b in splits for c in self._alphabet]
     return set(deletes + transposes + replaces + inserts)
   
   def _known_edits2(self, word):
-    return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in self._words)
+    return set(e2 for e1 in self._edits1(word) for e2 in self._edits1(e1) if e2 in self._words)
   
   def _known(self, words): return set(w for w in words if w in self._words)
   
   def _correct(self, word):
-    e1_words = self.known(self._edits1(word))
+    e1_words = self._known(self._edits1(word))
     e2_words = self._known_edits2(word)
 
-    candidates = known([word]) or e1_words or e2_words or [word]
+    candidates = self._known([word]) or e1_words or e2_words or [word]
     # FIX - RETURN MAX USING PYMONGO MAX CURSOR
-    return max(candidates, key=NWORDS.get)
+    return max(candidates, key=self._words.get)
 
   # def correctWord(self, word):
 
