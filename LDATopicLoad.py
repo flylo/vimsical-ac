@@ -27,8 +27,11 @@ class CreateDictionary(object):
 			for event, element in parser:
 				# remove stopwords
 				corpus_insert = element.text.lower()
-				corpus_insert = [word for word in corpus_insert.split()
-					if word not in self.stopwords]
+
+				# corpus_insert = [word for word in corpus_insert.split()
+				# 	if word not in self.stopwords]
+				corpus_insert = corpus_insert.split()
+
 				# rejoin and split on sentences
 				corpus_insert = " ".join(corpus_insert)
 				corpus_insert = corpus_insert.split('.')
