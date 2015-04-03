@@ -1,27 +1,19 @@
-# vimsical-ac
-topic mining and word completion (maybe eventually suggestion) module
+# Topic-Sensitive Auto Complete
+This is a module that updates the [Peter Norvig spell-checker](http://norvig.com/spell-correct.html) by changing the language model priors to be distributed as they are in a predicted topic.  I have no idea if this will prove to be a useful endeavour.  My goal is to tune the pipeline to the point where I can achieve similar accuracy to Norvig and then analyze the set of words where my autocompletion out-performed his.  If there are interesting patterns suggesting improved end-user experience, then this will be a success.
 
 ## current method idea
-1. topic model on corpus
-2. build autocorrect on top 75% of words in each topic in corpus
-3. predict topic of last n sentences
-4. use appropriate autocorrect function
-5. compare accuracy with no topic
-if there is no lift, then topics are likely a dead-end
+1. Build topic model on training corpus using Latent Dirichlet Allocation
+  * Stop Words ('in', 'the', 'if', etc...) were not removed as they improve accuracy in the current setup
+2. Dump word distributions for each topic into a MongoDB database
+  * Current version uses the distributional densities of each word in the topic, but future versions will play with the ordering to improve accuracy, as the order is entirely what determines the recommendation
+3. Predict topic of current sentence
+  * Future versions may predict topic of last n sentences depending on accuracy in testing
+4. Use predicted topic to query MongoDB for suggested correction of target word
+  * obviously this will need to be sped up if this methodology proves to be useful
+5. Test accuracy on a testing corpus of randomly selected documents that were withheld from the training set
 
-old notes:
-* system will be aware of high level topic of last n sentences
-* topic will be taken into account when serving maximum likelihood word completion
-  * online incrementing of sentence-level topic score for each word using word_topic_mappings mongo collection
-  * sentences (or groups of sentences) will be evaluated as belonging to a topic and topic-based language models will exist in a DB to 
-* system will be tested on holdout sample in corpus and tuned accordingly
-* recomputing of model to be done on server side
-* possible sources
-  * http://blog.javascriptroom.com/2013/01/21/markov-chains/
-    * http://stackoverflow.com/questions/14816100/convert-text-prediction-script-markov-chain-from-javascript-to-python
-  * http://www.peterbouda.eu/pressagio-a-predictive-text-system-in-python.html
-  * http://blog.qbox.io/multi-field-partial-word-autocomplete-in-elasticsearch-using-ngrams
-  * http://pythonhosted.org/pyenchant/api/enchant.html
-  * http://norvig.com/spell-correct.html
-    * determine how to rank words in the language model - ranking by topic score would lead to a lot of overly topic-specific results
-    * might NOT want to remove stopwords
+Current Performance Benchmark:
+Test Hit Rate (my module):  
+0.65
+Control Hit Rate (Norvig's module):  
+0.732

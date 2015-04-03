@@ -62,6 +62,7 @@ class ModelTester(object):
 	def testModels(self, max_edit_distance=1):
 		"""
 		max_edit_distance must be equal to 1 or 2
+		FIX - make this method less shitty
 		"""
 		self.max_edit_distance = max_edit_distance
 		acTEST = AutoCorrect.AutoCorrect(connect_file='./connect-string.json',
@@ -100,7 +101,7 @@ class ModelTester(object):
 		
 		print "Control Hit Rate:  "
 		print float(sum(correctwordsCONTROL)) / float(len(correctwordsCONTROL))
-		pdb.set_trace()
+		#pdb.set_trace()
 
 
 
